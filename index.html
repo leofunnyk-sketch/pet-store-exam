@@ -46,17 +46,27 @@ header.top .pill b{color:var(--accent-d); font-weight:800}
   border-radius:99px; transition:width .35s ease}
 
 .controls{background:var(--card); border:1px solid var(--line); border-radius:var(--radius);
-  padding:14px; margin:12px 0; box-shadow:var(--shadow-s)}
-.controls .row{display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-bottom:10px}
+  padding:18px 20px; margin:14px 0; box-shadow:var(--shadow-s)}
+.controls .row{display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-bottom:12px}
 .controls .row:last-child{margin-bottom:0}
-.controls label{font-size:12.5px; color:var(--muted); margin-right:2px}
-.chip{font-size:12.5px; padding:6px 12px; border-radius:999px; cursor:pointer; user-select:none;
+.controls label{font-size:13px; color:var(--muted); margin-right:4px}
+/* 分组筛选：左侧固定标题 + 右侧 chips */
+.controls .group{display:flex; gap:14px; align-items:flex-start; margin:0; padding:14px 0; border-bottom:1px dashed var(--line)}
+.controls .group:last-child{border-bottom:none; padding-bottom:0}
+.controls .glabel{flex:0 0 46px; text-align:right; font-size:13px; font-weight:800; color:var(--muted);
+  padding-top:9px; letter-spacing:.06em; user-select:none}
+.controls .chips{display:flex; gap:9px 10px; flex-wrap:wrap; flex:1; align-content:flex-start}
+.controls .chips.dense{background:var(--bg); border:1px solid var(--line); border-radius:14px;
+  padding:13px 14px; max-height:208px; overflow-y:auto; gap:9px 10px}
+.controls .chips.dense::-webkit-scrollbar{width:8px}
+.controls .chips.dense::-webkit-scrollbar-thumb{background:#e3d8c8; border-radius:8px}
+.chip{font-size:13px; padding:7px 14px; border-radius:999px; cursor:pointer; user-select:none;
   background:var(--bg); border:1px solid var(--line); color:var(--ink); transition:.15s; white-space:nowrap}
-.chip.on{background:var(--accent); border-color:var(--accent); color:#fff; font-weight:700}
-.chip:hover{border-color:var(--accent)}
-.controls input[type=number]{width:62px; padding:6px 8px; border:1px solid var(--line); border-radius:10px;
+.chip.on{background:var(--accent); border-color:var(--accent); color:#fff; font-weight:700; box-shadow:0 3px 10px rgba(224,121,60,.3)}
+.chip:hover{border-color:var(--accent); color:var(--accent-d)}
+.controls input[type=number]{width:66px; padding:8px; border:1px solid var(--line); border-radius:10px;
   font-size:14px; text-align:center; background:var(--bg)}
-.controls input[type=search]{flex:1; min-width:140px; padding:8px 12px; border:1px solid var(--line);
+.controls input[type=search]{flex:1; min-width:160px; padding:10px 14px; border:1px solid var(--line);
   border-radius:10px; font-size:14px; background:var(--bg)}
 .btn{display:inline-flex; align-items:center; justify-content:center; gap:6px; cursor:pointer;
   border:none; border-radius:12px; padding:11px 18px; font-size:14.5px; font-weight:800;
@@ -224,77 +234,57 @@ function setMode(m){
 
 /* ---------- 控件 ---------- */
 function chip(label,key,val,active){ const c=el('span','chip'+(active?' on':''),label); c.dataset.k=key; c.dataset.v=val; return c; }
+function fgroup(label, dense, nodes){
+  const g=el('div','group');
+  g.appendChild(el('span','glabel',label));
+  const ch=el('div','chips'+(dense?' dense':''));
+  nodes.forEach(n=>ch.appendChild(n));
+  g.appendChild(ch);
+  return g;
+}
 function renderControls(){
   const c=$("#controls"); c.innerHTML="";
   if(state.mode==='learn'){
-    const row=el('div','row');
-    const themes=Object.keys(THEME_NAME);
-    row.appendChild(chip("全部主题","theme","",true));
-    themes.forEach(t=>row.appendChild(chip(THEME_NAME[t],"theme",t,false)));
-    c.appendChild(row);
-    const row2=el('div','row');
-    row2.appendChild(chip("全部物种","species","",true));
-    row2.appendChild(chip("🐶 狗","species","dog",false));
-    row2.appendChild(chip("🐱 猫","species","cat",false));
-    c.appendChild(row2);
-    const row3=el('div','row');
-    row3.appendChild(chip("全部知识点","tag","",true));
+    const themeChips=[chip("全部主题","theme","",true)];
+    Object.keys(THEME_NAME).forEach(t=>themeChips.push(chip(THEME_NAME[t],"theme",t,false)));
+    c.appendChild(fgroup('主题', false, themeChips));
+    c.appendChild(fgroup('物种', false, [chip("全部物种","species","",true), chip("🐶 狗","species","dog",false), chip("🐱 猫","species","cat",false)]));
     const tags=[...new Set(QUESTIONS.map(q=>q.tag))].sort();
-    tags.forEach(t=>row3.appendChild(chip(t,"tag",t,false)));
-    c.appendChild(row3);
-    const row4=el('div','row');
+    const tagChips=[chip("全部知识点","tag","",true)];
+    tags.forEach(t=>tagChips.push(chip(t,"tag",t,false)));
+    c.appendChild(fgroup('知识点', true, tagChips));
     const s=el('input'); s.type='search'; s.placeholder='搜索题目或知识点…'; s.id='search';
     s.addEventListener('input',()=>{ learnOffset=0; renderApp(); });
-    row4.appendChild(s);
-    c.appendChild(row4);
+    c.appendChild(fgroup('搜索', false, [s]));
     learnOffset=0;
   } else if(state.mode==='practice'){
-    const row=el('div','row');
-    row.appendChild(chip("全部主题","theme","",true));
-    Object.keys(THEME_NAME).forEach(t=>row.appendChild(chip(THEME_NAME[t],"theme",t,false)));
-    c.appendChild(row);
-    const row2=el('div','row');
-    row2.appendChild(chip("全部物种","species","",true));
-    row2.appendChild(chip("🐶 狗","species","dog",false));
-    row2.appendChild(chip("🐱 猫","species","cat",false));
-    c.appendChild(row2);
-    const row3=el('div','row');
-    row3.appendChild(chip("全部题型","type","",true));
-    row3.appendChild(chip("单选","type","single",false));
-    row3.appendChild(chip("判断","type","judge",false));
-    row3.appendChild(chip("情景","type","scenario",false));
-    c.appendChild(row3);
-    const row4=el('div','row');
-    row4.appendChild(el('label',null,'难度'));
-    row4.appendChild(chip("全部","difficulty","",true));
-    [1,2,3].forEach(d=>row4.appendChild(chip(DIFF_NAME[d],"difficulty",d,false)));
-    c.appendChild(row4);
-    const row5=el('div','row');
-    row5.appendChild(el('label',null,'题量'));
+    const themeChips=[chip("全部主题","theme","",true)];
+    Object.keys(THEME_NAME).forEach(t=>themeChips.push(chip(THEME_NAME[t],"theme",t,false)));
+    c.appendChild(fgroup('主题', false, themeChips));
+    c.appendChild(fgroup('物种', false, [chip("全部物种","species","",true), chip("🐶 狗","species","dog",false), chip("🐱 猫","species","cat",false)]));
+    c.appendChild(fgroup('题型', false, [chip("全部题型","type","",true), chip("单选","type","single",false), chip("判断","type","judge",false), chip("情景","type","scenario",false)]));
+    c.appendChild(fgroup('难度', false, [chip("全部","difficulty","",true), ...[1,2,3].map(d=>chip(DIFF_NAME[d],"difficulty",d,false))]));
     const n=el('input'); n.type='number'; n.id='pnum'; n.value='20'; n.min='1'; n.max='200';
-    row5.appendChild(n);
     const b=el('button','btn','开始练习'); b.onclick=startPractice;
-    row5.appendChild(b);
-    c.appendChild(row5);
+    c.appendChild(fgroup('练习', false, [n, b]));
   } else if(state.mode==='exam'){
-    const row=el('div','row');
-    row.appendChild(el('label',null,'考核说明'));
-    row.appendChild(el('span',null,'四主题均衡抽样 · 狗6猫4 · 限时 · 合格线 80%',));
-    c.appendChild(row);
-    const row2=el('div','row');
+    const r=el('div','row');
+    r.appendChild(el('span','tip','四主题均衡抽样 · 狗6猫4 · 限时 · 合格线 80%'));
+    c.appendChild(r);
+    const r2=el('div','row');
     const b=el('button','btn','开始考核（45 题）'); b.onclick=startExam;
-    row2.appendChild(b);
-    c.appendChild(row2);
+    r2.appendChild(b);
+    c.appendChild(r2);
   } else if(state.mode==='wrong'){
-    const row=el('div','row');
+    const r=el('div','row');
     const ids=Object.keys(WRONG);
-    row.appendChild(el('span','tip', ids.length? `共 ${ids.length} 道错题` : '还没有错题，去练习吧！'));
-    c.appendChild(row);
+    r.appendChild(el('span','tip', ids.length? `共 ${ids.length} 道错题` : '还没有错题，去练习吧！'));
+    c.appendChild(r);
     if(ids.length){
-      const row2=el('div','row');
-      const b1=el('button','btn','重练错题'); b1.onclick=startWrongPractice; row2.appendChild(b1);
-      const b2=el('button','btn ghost','清空错题本'); b2.onclick=()=>{ if(confirm('确定清空全部错题？')){ WRONG={}; saveWrong(); renderApp(); } }; row2.appendChild(b2);
-      c.appendChild(row2);
+      const r2=el('div','row');
+      const b1=el('button','btn','重练错题'); b1.onclick=startWrongPractice; r2.appendChild(b1);
+      const b2=el('button','btn ghost','清空错题本'); b2.onclick=()=>{ if(confirm('确定清空全部错题？')){ WRONG={}; saveWrong(); renderApp(); } }; r2.appendChild(b2);
+      c.appendChild(r2);
     }
   }
   c.querySelectorAll('.chip').forEach(ch=>ch.onclick=()=>{
