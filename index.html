@@ -57,7 +57,8 @@ header.top .pill b{color:var(--accent-d); font-weight:800}
   padding-top:9px; letter-spacing:.06em; user-select:none}
 .controls .chips{display:flex; gap:9px 10px; flex-wrap:wrap; flex:1; align-content:flex-start}
 .controls .chips.dense{background:var(--bg); border:1px solid var(--line); border-radius:14px;
-  padding:13px 14px; max-height:208px; overflow-y:auto; gap:9px 10px}
+  padding:13px 14px; max-height:208px; overflow-y:auto; gap:9px 10px;
+  -webkit-overflow-scrolling:touch; overscroll-behavior:contain}
 .controls .chips.dense::-webkit-scrollbar{width:8px}
 .controls .chips.dense::-webkit-scrollbar-thumb{background:#e3d8c8; border-radius:8px}
 .chip{font-size:13px; padding:7px 14px; border-radius:999px; cursor:pointer; user-select:none;
@@ -151,13 +152,60 @@ header.top .pill b{color:var(--accent-d); font-weight:800}
 .witem .acts{display:flex; gap:8px; margin-top:9px}
 .empty{text-align:center; color:var(--muted); padding:40px 0; font-size:14px}
 footer{text-align:center; color:var(--muted); font-size:12px; padding:18px 0 0}
+/* ===== 移动端全面优化 ===== */
 @media (max-width:520px){
-  body{font-size:15px}
-  .wrap{padding:16px 13px 80px}
-  header.top h1{font-size:21px}
-  .tabs .tab{font-size:13px; padding:10px 2px}
-  .q{font-size:16.5px}
-  .card{padding:16px}
+  body{font-size:14.5px; line-height:1.6}
+  .wrap{padding:12px 10px 70px}
+  /* 头部精简 */
+  header.top{padding:8px 0 4px}
+  header.top h1{font-size:18px; margin-bottom:2px}
+  header.top .sub{font-size:11.5px}
+  header.top .stats{gap:6px; margin-top:8px}
+  header.top .pill{padding:4px 9px; font-size:11px}
+  /* 模式标签栏紧凑 */
+  .tabs{padding:7px 8px; margin:10px -10px 2px; gap:4px}
+  .tabs .tab{font-size:12.5px; padding:8px 2px; border-radius:10px}
+  .tabs .tab .em{font-size:14px}
+  /* 控件区大幅压缩 */
+  .controls{padding:12px 13px; margin:10px 0; border-radius:14px}
+  /* 分组：标题在上、chips在下（竖排），节省横向空间 */
+  .controls .group{flex-direction:column; gap:7px; padding:10px 0;
+    border-bottom:1px dotted var(--line)}
+  .controls .glabel{flex:none; text-align:left; font-size:12px; font-weight:700;
+    padding:0; letter-spacing:.04em; color:var(--accent-d); opacity:.75}
+  .controls .chips{gap:6px 7px}
+  .chips.dense{padding:9px 10px; max-height:130px; gap:6px 7px; border-radius:11px;
+    -webkit-overflow-scrolling:touch}
+  /* 芯片更小 */
+  .chip{font-size:11.5px; padding:5px 10px; border-radius:999px}
+  .chip.on{box-shadow:0 2px 7px rgba(224,121,60,.25)}
+  /* 搜索框紧凑 */
+  .controls input[type=search]{padding:8px 10px; font-size:13px; min-width:0;
+    border-radius:9px}
+  .controls input[type=number]{width:56px; padding:6px; font-size:13px}
+  /* 按钮 */
+  .btn{padding:9px 14px; font-size:13px; border-radius:10px}
+  /* 卡片 */
+  .card{padding:14px; margin:10px 0; border-radius:14px}
+  .q{font-size:15.5px; margin:1px 0 12px}
+  .opt{padding:10px 11px; font-size:14px; gap:9px}
+  .opt .lt{flex:0 0 21px; height:21px; font-size:12px; border-radius:6px}
+  .feedback{padding:11px 12px; margin-top:10px}
+  /* 学习卡 */
+  .kcard{padding:14px; margin:9px 0; border-radius:14px}
+  .kcard .q{font-size:14.5px}
+  .kcard .ans{padding:10px 11px; font-size:13px}
+  /* 报告 */
+  .report .score{font-size:38px}
+  .stat .box{min-width:72px; padding:9px}
+  .stat .box b{font-size:18px}
+  .bar{font-size:12px; gap:7px}
+  .bar .lab{width:68px}
+  /* 错题本 */
+  .witem{padding:11px 12px; margin:8px 0; border-radius:11px}
+  .witem .q{font-size:14px}
+  /* 进度条 */
+  .progress{margin:6px 0 2px; height:5px}
 }
 </style>
 </head>
