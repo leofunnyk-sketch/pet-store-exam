@@ -76,26 +76,21 @@ header.top .pill b{color:var(--accent-d); font-weight:800}
 .progress > i{display:block; height:100%; width:0; background:linear-gradient(90deg,var(--accent),#f0a468);
   border-radius:var(--r-pill); transition:width .35s ease}
 
-/* ---------- controls ---------- */
-.controls{background:var(--card); border:1px solid var(--line); border-radius:var(--r-xl);
-  padding:var(--s5) var(--s6); margin:var(--s5) 0; box-shadow:var(--sh-2)}
-.controls .row{display:flex; gap:var(--s3); flex-wrap:wrap; align-items:center; margin-bottom:var(--s3)}
-.controls .row:last-child{margin-bottom:0}
-.controls label{font-size:13px; color:var(--muted); margin-right:4px}
-.controls .group{display:flex; gap:var(--s4); align-items:center; margin:0; padding:var(--s4) 0; border-bottom:1px solid var(--line)}
-.controls .group:first-child{padding-top:0}
-.controls .group:last-child{border-bottom:none; padding-bottom:0}
-.controls .glabel{flex:0 0 52px; text-align:left; font-size:12px; font-weight:700; color:var(--muted);
-  letter-spacing:.08em; user-select:none}
-.controls .chips{display:flex; gap:var(--s2) var(--s3); flex-wrap:wrap; flex:1; align-content:flex-start}
-.chip{font-size:13px; padding:8px 15px; border-radius:var(--r-pill); cursor:pointer; user-select:none;
+/* ---------- controls — 紧凑筛选栏 ---------- */
+.controls{margin:var(--s5) 0}
+.controls .bar{display:flex; flex-wrap:wrap; gap:6px 10px; align-items:center}
+.controls .bar + .bar{margin-top:var(--s2)}
+.controls .bar-label{font-size:11.5px; font-weight:700; color:var(--muted); letter-spacing:.06em;
+  text-transform:uppercase; margin-right:2px; user-select:none; white-space:nowrap}
+.controls .chips{display:inline-flex; gap:6px; flex-wrap:wrap; align-items:center}
+.chip{font-size:12.5px; padding:7px 14px; border-radius:var(--r-pill); cursor:pointer; user-select:none;
   background:var(--bg-soft); border:1px solid var(--line); color:var(--text); transition:.15s; white-space:nowrap}
-.chip.on{background:var(--accent); border-color:var(--accent); color:#fff; font-weight:600; box-shadow:0 3px 10px rgba(221,122,60,.28)}
+.chip.on{background:var(--accent); border-color:var(--accent); color:#fff; font-weight:600; box-shadow:0 2px 8px rgba(221,122,60,.25)}
 .chip:hover{border-color:var(--accent); color:var(--accent-d)}
-.controls input[type=number]{width:68px; padding:9px; border:1px solid var(--line); border-radius:var(--r-sm);
-  font-size:14px; text-align:center; background:var(--bg-soft); color:var(--ink)}
-.controls input[type=search]{flex:1; min-width:160px; padding:11px 15px; border:1px solid var(--line);
-  border-radius:var(--r-sm); font-size:14px; background:var(--bg-soft); color:var(--ink)}
+.controls input[type=number]{width:64px; padding:8px 10px; border:1px solid var(--line); border-radius:var(--r-sm);
+  font-size:13.5px; text-align:center; background:var(--card); color:var(--ink)}
+.controls input[type=search]{flex:1; min-width:180px; padding:10px 14px; border:1px solid var(--line);
+  border-radius:var(--r-md); font-size:13.5px; background:var(--card); color:var(--ink)}
 .controls input[type=search]:focus,.controls input[type=number]:focus{outline:none; border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-soft)}
 
 /* ---------- buttons ---------- */
@@ -196,14 +191,14 @@ footer{text-align:center; color:var(--muted); font-size:12px; padding:var(--s6) 
   .tabs{padding:6px; margin:var(--s4) -14px var(--s2); gap:4px; border-radius:var(--r-md)}
   .tabs .tab{font-size:12.5px; padding:10px 2px; border-radius:10px}
   .tabs .tab .em{font-size:14px}
-  .controls{padding:var(--s4) var(--s4); margin:var(--s4) 0; border-radius:var(--r-lg)}
-  .controls .group{flex-direction:column; gap:var(--s2); padding:var(--s4) 0; align-items:stretch}
-  .controls .glabel{flex:none; font-size:11.5px; padding:0; color:var(--accent-d); opacity:.8}
-  .controls .chips{gap:6px 8px}
-  .chip{font-size:12px; padding:7px 12px}
-  .chip.on{box-shadow:0 2px 7px rgba(221,122,60,.22)}
-  .controls input[type=search]{padding:10px 12px; font-size:13px; min-width:0}
-  .controls input[type=number]{width:58px; padding:8px; font-size:13px}
+  .controls{margin:var(--s4) 0}
+  .controls .bar{gap:5px 8px}
+  .controls .bar-label{font-size:10.5px; margin-right:1px}
+  .controls .chips{gap:5px}
+  .chip{font-size:11.5px; padding:6px 11px}
+  .chip.on{box-shadow:0 2px 6px rgba(221,122,60,.2)}
+  .controls input[type=search]{padding:9px 11px; font-size:12.5px; min-width:140px}
+  .controls input[type=number]{width:56px; padding:7px 8px; font-size:12.5px}
   .btn{padding:11px 16px; font-size:13px; border-radius:10px}
   .card{padding:var(--s4) var(--s4); margin:var(--s4) 0; border-radius:var(--r-lg)}
   .q{font-size:16px; margin:0 0 var(--s3)}
@@ -297,52 +292,59 @@ function setMode(m){
   renderControls(); renderApp();
 }
 
-/* ---------- 控件 ---------- */
+/* ---------- 控件 — 紧凑横排筛选栏 ---------- */
 function chip(label,key,val,active){ const c=el('span','chip'+(active?' on':''),label); c.dataset.k=key; c.dataset.v=val; return c; }
-function fgroup(label, dense, nodes){
-  const g=el('div','group');
-  g.appendChild(el('span','glabel',label));
-  const ch=el('div','chips'+(dense?' dense':''));
+function bar(label, nodes){
+  const r=el('div','bar');
+  if(label) r.appendChild(el('span','bar-label',label));
+  const ch=el('span','chips');
   nodes.forEach(n=>ch.appendChild(n));
-  g.appendChild(ch);
-  return g;
+  r.appendChild(ch);
+  return r;
 }
 function renderControls(){
   const c=$("#controls"); c.innerHTML="";
   if(state.mode==='learn'){
-    const themeChips=[chip("全部主题","theme","",true)];
+    const themeChips=[chip("全部","theme","",true)];
     Object.keys(THEME_NAME).forEach(t=>themeChips.push(chip(THEME_NAME[t],"theme",t,false)));
-    c.appendChild(fgroup('主题', false, themeChips));
-    c.appendChild(fgroup('物种', false, [chip("全部物种","species","",true), chip("🐶 狗","species","dog",false), chip("🐱 猫","species","cat",false)]));
+    c.appendChild(bar("主题", themeChips));
+    c.appendChild(bar("物种", [chip("全部","species","",true), chip("🐶 狗","species","dog",false), chip("🐱 猫","species","cat",false)]));
     const s=el('input'); s.type='search'; s.placeholder='搜索题目或标签…'; s.id='search';
     s.addEventListener('input',()=>{ learnOffset=0; renderApp(); });
-    c.appendChild(fgroup('搜索', false, [s]));
+    const sr=el('div','bar'); sr.appendChild(s); c.appendChild(sr);
     learnOffset=0;
   } else if(state.mode==='practice'){
-    const themeChips=[chip("全部主题","theme","",true)];
+    const themeChips=[chip("全部","theme","",true)];
     Object.keys(THEME_NAME).forEach(t=>themeChips.push(chip(THEME_NAME[t],"theme",t,false)));
-    c.appendChild(fgroup('主题', false, themeChips));
-    c.appendChild(fgroup('物种', false, [chip("全部物种","species","",true), chip("🐶 狗","species","dog",false), chip("🐱 猫","species","cat",false)]));
-    c.appendChild(fgroup('题型', false, [chip("全部题型","type","",true), chip("单选","type","single",false), chip("判断","type","judge",false), chip("情景","type","scenario",false)]));
-    c.appendChild(fgroup('难度', false, [chip("全部","difficulty","",true), ...[1,2,3].map(d=>chip(DIFF_NAME[d],"difficulty",d,false))]));
+    c.appendChild(bar("主题", themeChips));
+    // 第二行：物种 + 题型 + 难度 并排
+    const row2=el('div','bar');
+    const sp=el('span','chips'); sp.appendChild(chip("全部","species","",true)); sp.appendChild(chip("🐶 狗","species","dog",false)); sp.appendChild(chip("🐱 猫","species","cat",false));
+    row2.appendChild(el('span','bar-label','物种')); row2.appendChild(sp);
+    const tp=el('span','chips'); tp.appendChild(chip("全部","type","",true)); tp.appendChild(chip("单选","type","single",false)); tp.appendChild(chip("判断","type","judge",false)); tp.appendChild(chip("情景","type","scenario",false));
+    row2.appendChild(el('span','bar-label','题型')); row2.appendChild(tp);
+    const df=el('span','chips'); df.appendChild(chip("全部","difficulty","",true)); [1,2,3].forEach(d=>df.appendChild(chip(DIFF_NAME[d],"difficulty",d,false)));
+    row2.appendChild(el('span','bar-label','难度')); row2.appendChild(df);
+    c.appendChild(row2);
+    // 第三行：数量 + 按钮
     const n=el('input'); n.type='number'; n.id='pnum'; n.value='20'; n.min='1'; n.max='200';
     const b=el('button','btn','开始练习'); b.onclick=startPractice;
-    c.appendChild(fgroup('练习', false, [n, b]));
+    c.appendChild(bar(null, [n, b]));
   } else if(state.mode==='exam'){
-    const r=el('div','row');
+    const r=el('div','bar');
     r.appendChild(el('span','tip','四主题均衡抽样 · 狗6猫4 · 限时 · 合格线 80%'));
     c.appendChild(r);
-    const r2=el('div','row');
+    const r2=el('div','bar');
     const b=el('button','btn','开始考核（45 题）'); b.onclick=startExam;
     r2.appendChild(b);
     c.appendChild(r2);
   } else if(state.mode==='wrong'){
-    const r=el('div','row');
+    const r=el('div','bar');
     const ids=Object.keys(WRONG);
     r.appendChild(el('span','tip', ids.length? `共 ${ids.length} 道错题` : '还没有错题，去练习吧！'));
     c.appendChild(r);
     if(ids.length){
-      const r2=el('div','row');
+      const r2=el('div','bar');
       const b1=el('button','btn','重练错题'); b1.onclick=startWrongPractice; r2.appendChild(b1);
       const b2=el('button','btn ghost','清空错题本'); b2.onclick=()=>{ if(confirm('确定清空全部错题？')){ WRONG={}; saveWrong(); renderApp(); } }; r2.appendChild(b2);
       c.appendChild(r2);
