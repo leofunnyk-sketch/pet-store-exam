@@ -78,10 +78,11 @@ header.top .pill b{color:var(--accent-d); font-weight:800}
 
 /* ---------- controls — 紧凑筛选栏 ---------- */
 .controls{margin:var(--s5) 0}
-.controls .bar{display:flex; flex-wrap:wrap; gap:6px 10px; align-items:center}
-.controls .bar + .bar{margin-top:var(--s2)}
-.controls .bar-label{font-size:11.5px; font-weight:700; color:var(--muted); letter-spacing:.06em;
-  text-transform:uppercase; margin-right:2px; user-select:none; white-space:nowrap}
+.controls .bar{display:flex; flex-wrap:wrap; gap:8px 12px; align-items:center}
+.controls .bar + .bar{margin-top:var(--s3)}
+.controls .bar-label{flex:0 0 auto; min-width:32px; font-size:11.5px; font-weight:700;
+  color:var(--muted); letter-spacing:.06em; user-select:none; white-space:nowrap;
+  padding-right:4px; opacity:.75}
 .controls .chips{display:inline-flex; gap:6px; flex-wrap:wrap; align-items:center}
 .chip{font-size:12.5px; padding:7px 14px; border-radius:var(--r-pill); cursor:pointer; user-select:none;
   background:var(--bg-soft); border:1px solid var(--line); color:var(--text); transition:.15s; white-space:nowrap}
@@ -192,8 +193,9 @@ footer{text-align:center; color:var(--muted); font-size:12px; padding:var(--s6) 
   .tabs .tab{font-size:12.5px; padding:10px 2px; border-radius:10px}
   .tabs .tab .em{font-size:14px}
   .controls{margin:var(--s4) 0}
-  .controls .bar{gap:5px 8px}
-  .controls .bar-label{font-size:10.5px; margin-right:1px}
+  .controls .bar{gap:6px 9px}
+  .controls .bar + .bar{margin-top:var(--s2)}
+  .controls .bar-label{min-width:28px; font-size:10.5px; padding-right:2px}
   .controls .chips{gap:5px}
   .chip{font-size:11.5px; padding:6px 11px}
   .chip.on{box-shadow:0 2px 6px rgba(221,122,60,.2)}
@@ -314,19 +316,20 @@ function renderControls(){
     const sr=el('div','bar'); sr.appendChild(s); c.appendChild(sr);
     learnOffset=0;
   } else if(state.mode==='practice'){
+    // 行1：主题
     const themeChips=[chip("全部","theme","",true)];
     Object.keys(THEME_NAME).forEach(t=>themeChips.push(chip(THEME_NAME[t],"theme",t,false)));
     c.appendChild(bar("主题", themeChips));
-    // 第二行：物种 + 题型 + 难度 并排
+    // 行2：物种 + 题型（并排，都是小分组）
     const row2=el('div','bar');
-    const sp=el('span','chips'); sp.appendChild(chip("全部","species","",true)); sp.appendChild(chip("🐶 狗","species","dog",false)); sp.appendChild(chip("🐱 猫","species","cat",false));
-    row2.appendChild(el('span','bar-label','物种')); row2.appendChild(sp);
-    const tp=el('span','chips'); tp.appendChild(chip("全部","type","",true)); tp.appendChild(chip("单选","type","single",false)); tp.appendChild(chip("判断","type","judge",false)); tp.appendChild(chip("情景","type","scenario",false));
-    row2.appendChild(el('span','bar-label','题型')); row2.appendChild(tp);
-    const df=el('span','chips'); df.appendChild(chip("全部","difficulty","",true)); [1,2,3].forEach(d=>df.appendChild(chip(DIFF_NAME[d],"difficulty",d,false)));
-    row2.appendChild(el('span','bar-label','难度')); row2.appendChild(df);
+    row2.appendChild(el('span','bar-label','物种'));
+    const sp=el('span','chips'); sp.appendChild(chip("全部","species","",true)); sp.appendChild(chip("🐶 狗","species","dog",false)); sp.appendChild(chip("🐱 猫","species","cat",false)); row2.appendChild(sp);
+    row2.appendChild(el('span','bar-label','题型'));
+    const tp=el('span','chips'); tp.appendChild(chip("全部","type","",true)); tp.appendChild(chip("单选","type","single",false)); tp.appendChild(chip("判断","type","judge",false)); tp.appendChild(chip("情景","type","scenario",false)); row2.appendChild(tp);
     c.appendChild(row2);
-    // 第三行：数量 + 按钮
+    // 行3：难度
+    c.appendChild(bar("难度", [chip("全部","difficulty","",true), chip("基础","difficulty",1,false), chip("进阶","difficulty",2,false), chip("高阶","difficulty",3,false)]));
+    // 行4：数量 + 按钮
     const n=el('input'); n.type='number'; n.id='pnum'; n.value='20'; n.min='1'; n.max='200';
     const b=el('button','btn','开始练习'); b.onclick=startPractice;
     c.appendChild(bar(null, [n, b]));
