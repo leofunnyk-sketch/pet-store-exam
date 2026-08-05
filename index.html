@@ -71,6 +71,26 @@ header.top .pill b{color:var(--accent-d); font-weight:800}
 .tabs .tab.on{background:var(--card); color:var(--accent-d); box-shadow:var(--sh-2); font-weight:700}
 .tabs .tab:active{transform:scale(.975)}
 
+/* ---------- 沉浸式做题栏 ---------- */
+.sessionbar{position:sticky; top:0; z-index:40; display:flex; align-items:center; gap:12px;
+  background:rgba(246,244,239,.9); backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px);
+  padding:11px 2px 13px; margin:0 0 var(--s3); border-bottom:1px solid var(--line)}
+.sessionbar .sexit{border:none; background:transparent; color:var(--muted); font-size:14px;
+  cursor:pointer; padding:6px 4px; font-weight:600; white-space:nowrap; transition:.15s}
+.sessionbar .sexit:hover{color:var(--accent-d)}
+.sessionbar .stitle{font-weight:700; font-size:14.5px; color:var(--ink); white-space:nowrap}
+.sessionbar .sright{margin-left:auto; font-size:12.5px; color:var(--muted); white-space:nowrap}
+.sessionbar .sprogress{position:absolute; left:0; right:0; bottom:-1px; height:4px; background:var(--line); overflow:hidden}
+.sessionbar .sprogress > i{display:block; height:100%; width:0; background:linear-gradient(90deg,var(--accent),#f0a468); transition:width .35s ease}
+/* 沉浸模式：隐藏一切干扰性导航 */
+body.in-session header.top,
+body.in-session .tabs,
+body.in-session #controls,
+body.in-session footer,
+body.in-session #progress{display:none !important}
+body.in-session .wrap{padding-top:var(--s4)}
+body.in-session .card{margin-top:var(--s3); animation:none}
+
 /* ---------- progress ---------- */
 .progress{height:6px; background:var(--line); border-radius:var(--r-pill); overflow:hidden; margin:var(--s3) 0 var(--s2)}
 .progress > i{display:block; height:100%; width:0; background:linear-gradient(90deg,var(--accent),#f0a468);
@@ -192,6 +212,10 @@ footer{text-align:center; color:var(--muted); font-size:12px; padding:var(--s6) 
   .tabs{padding:6px; margin:var(--s4) -14px var(--s2); gap:4px; border-radius:var(--r-md)}
   .tabs .tab{font-size:12.5px; padding:10px 2px; border-radius:10px}
   .tabs .tab .em{font-size:14px}
+  .sessionbar{padding:9px 2px 11px; gap:8px}
+  .sessionbar .stitle{font-size:13px}
+  .sessionbar .sright{font-size:11px}
+  .sessionbar .sexit{font-size:12.5px; padding:5px 2px}
   .controls{margin:var(--s4) 0}
   .controls .bar{gap:6px 9px}
   .controls .bar + .bar{margin-top:var(--s2)}
@@ -225,6 +249,12 @@ footer{text-align:center; color:var(--muted); font-size:12px; padding:var(--s6) 
 </head>
 <body>
 <div class="wrap">
+  <section class="sessionbar" id="sessionbar" style="display:none">
+    <button class="sexit" id="sexit" type="button">‹ 退出</button>
+    <div class="stitle" id="stitle">练习</div>
+    <div class="sright" id="sright"></div>
+    <div class="sprogress"><i></i></div>
+  </section>
   <header class="top">
     <h1>🐾 社区宠物店 · 专业知识练考系统</h1>
     <p class="sub">学 · 练 · 考 · 错题 —— 一站式掌握犬猫护理与门店经营</p>
@@ -255,7 +285,7 @@ const TYPE_NAME = {"single": "单选", "judge": "判断", "scenario": "情景"};
 const DIFF_NAME = {"1": "基础", "2": "进阶", "3": "高阶"};
 
 const state = { mode:"learn", list:[], idx:0, sel:null, submitted:false,
-  examTimer:null, examEnd:0, examUsed:{}, practiceRight:0, practiceDone:0 };
+  examTimer:null, examEnd:0, examUsed:{}, practiceRight:0, practiceDone:0, session:null };
 const WRONG_KEY = "pet_exam_wrong_v4";
 let WRONG = loadWrong();
 
@@ -292,6 +322,32 @@ function setMode(m){
   document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('on',t.dataset.mode===m));
   $("#progress").style.display = (m==='practice'||m==='exam')?'block':'none';
   renderControls(); renderApp();
+}
+
+/* ---------- 沉浸式做题会话 ---------- */
+function enterSession(mode){
+  state.session=mode;
+  document.body.classList.add('in-session');
+  const sb=$("#sessionbar"); if(sb) sb.style.display='flex';
+  $('#sexit').onclick=exitSession;
+  updateSessionBar();
+}
+function exitSession(){
+  state.session=null;
+  document.body.classList.remove('in-session');
+  const sb=$("#sessionbar"); if(sb) sb.style.display='none';
+  setMode(state.mode);
+}
+function updateSessionBar(){
+  if(!state.session) return;
+  const total=state.list.length;
+  const cur=Math.min(state.idx+1,total);
+  $("#stitle").textContent=(state.session==='exam'?'考核':'练习')+' · 第 '+cur+' / '+total+' 题';
+  if(state.session==='practice'){
+    const rate=state.practiceDone? Math.round(state.practiceRight/state.practiceDone*100):null;
+    $("#sright").textContent = rate==null? '' : ('已答对 '+state.practiceRight+' · 正确率 '+rate+'%');
+  }
+  updateProgress();
 }
 
 /* ---------- 控件 — 紧凑横排筛选栏 ---------- */
@@ -419,7 +475,7 @@ function startPractice(){
   if(pool.length<k) k=pool.length;
   state.list=sample(pool,k); state.idx=0; state.sel=null; state.submitted=false;
   state.practiceRight=0; state.practiceDone=0;
-  renderApp(); updateProgress();
+  enterSession('practice'); renderApp(); updateProgress(); updateSessionBar();
 }
 function startExam(){
   const N=45;
@@ -444,18 +500,19 @@ function startExam(){
   state.examUsed={};
   state.examEnd=Date.now()+45*60*1000;
   state.examTimer=setInterval(updateExamClock,1000); updateExamClock();
-  renderApp(); updateProgress();
+  renderApp(); updateProgress(); enterSession('exam'); updateSessionBar();
 }
 function updateExamClock(){
   const left=state.examEnd-Date.now();
   const m=Math.max(0,Math.floor(left/60000)), s=Math.max(0,Math.floor((left%60000)/1000));
   const t=$("#examClock"); if(t) t.textContent=`⏱ ${m}:${String(s).padStart(2,'0')}`;
+  const sr=$("#sright"); if(sr && state.session==='exam') sr.textContent=`⏱ ${m}:${String(s).padStart(2,'0')}`;
   if(left<=0 && state.examTimer){ clearInterval(state.examTimer); state.examTimer=null; finishExam(); }
 }
 function updateProgress(){
-  const p=$("#progress i"); if(!p)return;
-  if(!state.list.length){ p.style.width='0'; return; }
-  p.style.width=((state.idx)/state.list.length*100)+'%';
+  const w = state.list.length? (state.idx/state.list.length*100)+'%' : '0';
+  const p=$("#progress i"); if(p) p.style.width=w;
+  const sp=document.querySelector('.sessionbar .sprogress > i'); if(sp) sp.style.width=w;
 }
 function renderQuestion(app){
   if(!state.list.length){ app.appendChild(el('div','empty','请先在上方点击「开始'+(state.mode==='exam'?'考核':'练习')+'」')); return; }
@@ -496,6 +553,7 @@ function renderQuestion(app){
   }
   nav.appendChild(left); nav.appendChild(right); card.appendChild(nav);
   app.appendChild(card);
+  updateSessionBar();
 }
 function submit(q,fb,opts,nav,left,right){
   if(isScenario(q)){
@@ -537,7 +595,7 @@ function finishPractice(){
     <div class="box"><b>${state.practiceDone-state.practiceRight}</b><span>错误</span></div>
     <div class="box"><b>${rate}%</b><span>正确率</span></div></div>
     <div class="tip">错题已自动收入「错题本」</div>`;
-  const b=el('button','btn','再来一组'); b.onclick=()=>setMode('practice'); r.appendChild(b);
+  const b=el('button','btn','再来一组'); b.onclick=()=>startPractice(); r.appendChild(b);
   app.appendChild(r);
 }
 function finishExam(){
@@ -563,7 +621,7 @@ function finishExam(){
     bar.innerHTML=`<span class="lab">${THEME_NAME[t]}</span><span class="track"><i style="width:${p}%"></i></span><span class="v">${p}% (${b.c}/${b.t})</span>`;
     r.appendChild(bar);
   });
-  const b=el('button','btn','重做考核'); b.onclick=()=>setMode('exam'); r.appendChild(b);
+  const b=el('button','btn','重做考核'); b.onclick=()=>startExam(); r.appendChild(b);
   app.appendChild(r);
 }
 
