@@ -285,7 +285,7 @@ const TYPE_NAME = {"single": "单选", "judge": "判断", "scenario": "情景"};
 const DIFF_NAME = {"1": "基础", "2": "进阶", "3": "高阶"};
 
 const state = { mode:"learn", list:[], idx:0, sel:null, submitted:false,
-  examTimer:null, examEnd:0, examUsed:{}, practiceRight:0, practiceDone:0, session:null };
+  examTimer:null, examEnd:0, examUsed:{}, answers:{}, practiceRight:0, practiceDone:0, session:null };
 const WRONG_KEY = "pet_exam_wrong_v4";
 let WRONG = loadWrong();
 
@@ -473,7 +473,7 @@ function startPractice(){
   const pool=filterPool();
   let k=parseInt($('#pnum').value)||20; k=Math.max(1,Math.min(200,k));
   if(pool.length<k) k=pool.length;
-  state.list=sample(pool,k); state.idx=0; state.sel=null; state.submitted=false;
+  state.list=sample(pool,k); state.idx=0; state.sel=null; state.submitted=false; state.answers={};
   state.practiceRight=0; state.practiceDone=0;
   enterSession('practice'); renderApp(); updateProgress(); updateSessionBar();
 }
@@ -496,7 +496,7 @@ function startExam(){
   };
   let list=pickBalanced(dogPool,dogN).concat(pickBalanced(catPool,catN));
   for(let i=list.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [list[i],list[j]]=[list[j],list[i]]; }
-  state.list=list; state.idx=0; state.sel=null; state.submitted=false;
+  state.list=list; state.idx=0; state.sel=null; state.submitted=false; state.answers={};
   state.examUsed={};
   state.examEnd=Date.now()+45*60*1000;
   state.examTimer=setInterval(updateExamClock,1000); updateExamClock();
@@ -519,6 +519,9 @@ function renderQuestion(app){
   if(state.mode==='exam' && state.idx>=state.list.length){ return finishExam(); }
   if(state.mode==='practice' && state.idx>=state.list.length){ return finishPractice(); }
   const q=state.list[state.idx];
+  const rec=state.answers[q.id];
+  state.sel = rec? rec.sel : null;
+  state.submitted = rec? rec.submitted : false;
   const card=el('div','card');
   const meta=`<div class="qmeta">${tagHTML(q)}`+ (state.mode==='exam'?`<span class="tag" id="examClock"></span>`:'') +`</div>`;
   card.innerHTML=meta+`<div class="q"><span class="num">${state.idx+1}.</span>${esc(q.question)}</div>`;
@@ -528,6 +531,8 @@ function renderQuestion(app){
     const ta=el('textarea'); ta.className='opt'; ta.rows=4; ta.placeholder='写下你的处理思路…'; ta.style.resize='vertical';
     ta.style.width='100%'; ta.style.border='1.5px solid var(--line)'; ta.style.borderRadius='13px'; ta.style.padding='13px';
     ta.style.font='inherit'; ta.style.background='var(--bg)';
+    if(rec&&rec.text!=null) ta.value=rec.text;
+    if(state.submitted) ta.readOnly=true;
     opts.appendChild(ta);
   } else {
     q.options.forEach((o,i)=>{
@@ -539,52 +544,70 @@ function renderQuestion(app){
   }
   card.appendChild(opts);
   const fb=el('div','feedback'); card.appendChild(fb);
+  if(state.submitted){ applySubmittedState(q,opts,fb); }
   const nav=el('div','nav');
-  const left=el('span','tip',`第 ${state.idx+1} / ${state.list.length} 题`);
+  const prev=el('button','btn ghost','‹ 上一题');
+  const canBack = state.mode==='practice' && state.idx>0;
+  if(!canBack){ prev.disabled=true; }
+  else prev.onclick=()=>goTo(state.idx-1);
+  const tip=el('span','tip',`第 ${state.idx+1} / ${state.list.length} 题`);
   const right=el('div');
   if(!state.submitted){
-    const b=el('button','btn', state.mode==='exam'?'提交本题':'提交'); b.onclick=()=>submit(q,fb,opts,nav,left,right);
+    const b=el('button','btn', state.mode==='exam'?'提交本题':'提交'); b.onclick=()=>submit(q,opts,fb);
     right.appendChild(b);
   } else {
     const isLast = state.idx>=state.list.length-1;
-    const b=el('button','btn', isLast?'查看结果':'下一题');
-    b.onclick=()=>{ state.idx++; state.sel=null; state.submitted=false; renderApp(); updateProgress(); };
+    const b=el('button','btn', isLast?'查看结果':'下一题 ›');
+    b.onclick=()=>{ if(isLast){ state.mode==='exam'?finishExam():finishPractice(); } else goTo(state.idx+1); };
     right.appendChild(b);
   }
-  nav.appendChild(left); nav.appendChild(right); card.appendChild(nav);
+  nav.appendChild(prev); nav.appendChild(tip); nav.appendChild(right); card.appendChild(nav);
   app.appendChild(card);
   updateSessionBar();
 }
-function submit(q,fb,opts,nav,left,right){
+function goTo(i){ state.idx=i; renderApp(); updateProgress(); }
+function applySubmittedState(q,opts,fb){
+  const rec=state.answers[q.id];
   if(isScenario(q)){
-    state.submitted=true;
     fb.className='feedback ok show';
     fb.innerHTML=`<div class="verdict">✅ 参考思路</div><div class="exp">${esc(q.answer)}<br><b>评分要点：</b>${esc(q.explanation||'')}</div>`;
-    const isLast=state.idx>=state.list.length-1;
-    right.innerHTML=''; const b=el('button','btn',isLast?'查看结果':'下一题');
-    b.onclick=()=>{ state.idx++; state.submitted=false; renderApp(); updateProgress(); };
-    right.appendChild(b); return;
+    return;
   }
-  if(state.sel==null){ alert('请先选择一个选项'); return; }
-  state.submitted=true; state.examUsed[q.id]=state.sel;
-  const correct = state.sel===q.answer;
-  if(state.mode==='practice'){ state.practiceDone++; if(correct)state.practiceRight++; }
-  if(state.mode==='exam' && !correct){ WRONG[q.id]={your:state.sel}; saveWrong(); }
-  if(state.mode==='practice' && !correct){ WRONG[q.id]={your:state.sel}; saveWrong(); }
   opts.querySelectorAll('.opt').forEach(x=>{
     if(x.dataset.v===q.answer) x.classList.add('ok');
-    else if(x.dataset.v===state.sel) x.classList.add('bad');
+    else if(x.dataset.v===rec.sel) x.classList.add('bad');
     else x.classList.add('dim');
     x.onclick=null;
   });
+  const correct=rec.correct;
   fb.className='feedback show '+(correct?'ok':'bad');
-  fb.innerHTML=`<div class="verdict">${correct?'✅ 回答正确':'❌ 回答错误'}</div>
-    <div class="exp"><b>正确答案：</b>${esc(q.answer)}<br>${esc(q.explanation||'')}</div>`;
-  const isLast=state.idx>=state.list.length-1;
-  right.innerHTML=''; const b=el('button','btn',isLast?'查看结果':'下一题');
-  b.onclick=()=>{ state.idx++; state.sel=null; state.submitted=false; renderApp(); updateProgress(); };
-  right.appendChild(b);
+  fb.innerHTML=`<div class="verdict">${correct?'✅ 回答正确':'❌ 回答错误'}</div><div class="exp"><b>正确答案：</b>${esc(q.answer)}<br>${esc(q.explanation||'')}</div>`;
 }
+function submit(q,opts,fb){
+  if(isScenario(q)){
+    const ta=opts.querySelector('textarea');
+    const text=ta?ta.value:'';
+    if(!state.answers[q.id] || !state.answers[q.id].submitted){
+      if(state.mode==='practice'){ state.practiceDone++; }
+    }
+    state.answers[q.id]={sel:null, submitted:true, text:text, correct:null};
+    state.submitted=true;
+    renderApp(); updateProgress();
+    return;
+  }
+  if(state.sel==null){ alert('请先选择一个选项'); return; }
+  const correct = state.sel===q.answer;
+  state.examUsed[q.id]=state.sel;
+  if(!state.answers[q.id] || !state.answers[q.id].submitted){
+    if(state.mode==='practice'){ state.practiceDone++; if(correct)state.practiceRight++; }
+    if(state.mode==='exam' && !correct){ WRONG[q.id]={your:state.sel}; saveWrong(); }
+    if(state.mode==='practice' && !correct){ WRONG[q.id]={your:state.sel}; saveWrong(); }
+  }
+  state.answers[q.id]={sel:state.sel, submitted:true, correct:correct};
+  state.submitted=true;
+  renderApp(); updateProgress();
+}
+
 function finishPractice(){
   const app=$("#app"); app.innerHTML="";
   const rate=state.practiceDone? Math.round(state.practiceRight/state.practiceDone*100):0;
